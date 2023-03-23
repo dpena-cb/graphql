@@ -69,28 +69,28 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(in)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	resp, err := ctxhttp.Post(ctx, c.httpClient, c.url, "application/json", &buf)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
-	var out = new(output)
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return out, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
+		return nil, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
 	}
+	var out = new(output)
 	err = json.NewDecoder(resp.Body).Decode(&out)
 	if err != nil {
 		// TODO: Consider including response body in returned error, if deemed helpful.
-		return out, err
+		return nil, err
 	}
 	if out.Data != nil {
 		err := jsonutil.UnmarshalGraphQL(*out.Data, v)
 		if err != nil {
 			// TODO: Consider including response body in returned error, if deemed helpful.
-			return out, err
+			return nil, err
 		}
 	}
 	if len(out.Errors) > 0 {
