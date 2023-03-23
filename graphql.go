@@ -84,13 +84,13 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 	err = json.NewDecoder(resp.Body).Decode(&out)
 	if err != nil {
 		// TODO: Consider including response body in returned error, if deemed helpful.
-		return err
+		return out, err
 	}
 	if out.Data != nil {
 		err := jsonutil.UnmarshalGraphQL(*out.Data, v)
 		if err != nil {
 			// TODO: Consider including response body in returned error, if deemed helpful.
-			return err
+			return out, err
 		}
 	}
 	if len(out.Errors) > 0 {
