@@ -33,19 +33,25 @@ func NewClient(url string, httpClient *http.Client) *Client {
 // Query executes a single GraphQL query request,
 // with a query derived from q, populating the response into it.
 // q should be a pointer to struct that corresponds to the GraphQL schema.
-func (c *Client) Query(ctx context.Context, q interface{}, variables map[string]interface{}) error {
+func (c *Client) Query(ctx context.Context, q interface{}, variables map[string]interface{}) (*output, error) {
 	return c.do(ctx, queryOperation, q, variables)
 }
 
 // Mutate executes a single GraphQL mutation request,
 // with a mutation derived from m, populating the response into it.
 // m should be a pointer to struct that corresponds to the GraphQL schema.
-func (c *Client) Mutate(ctx context.Context, m interface{}, variables map[string]interface{}) error {
+func (c *Client) Mutate(ctx context.Context, m interface{}, variables map[string]interface{}) (*output, error) {
 	return c.do(ctx, mutationOperation, m, variables)
 }
 
+type output struct {
+	Data   *json.RawMessage
+	Errors errors
+	//Extensions interface{} // Unused.
+}
+
 // do executes a single GraphQL operation.
-func (c *Client) do(ctx context.Context, op operationType, v interface{}, variables map[string]interface{}) error {
+func (c *Client) do(ctx context.Context, op operationType, v interface{}, variables map[string]interface{}) (*output, error) {
 	var query string
 	switch op {
 	case queryOperation:
@@ -70,14 +76,10 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 		return err
 	}
 	defer resp.Body.Close()
+	var out = new(output)
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
-	}
-	var out struct {
-		Data   *json.RawMessage
-		Errors errors
-		//Extensions interface{} // Unused.
+		return out, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
 	}
 	err = json.NewDecoder(resp.Body).Decode(&out)
 	if err != nil {
@@ -92,9 +94,9 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 		}
 	}
 	if len(out.Errors) > 0 {
-		return out.Errors
+		return out, out.Errors
 	}
-	return nil
+	return out, nil
 }
 
 // errors represents the "errors" array in a response from a GraphQL server.
