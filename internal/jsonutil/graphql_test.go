@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shurcooL/graphql"
-	"github.com/shurcooL/graphql/internal/jsonutil"
+	"github.com/dpena-cb/graphql"
+	"github.com/dpena-cb/graphql/internal/jsonutil"
 )
 
 func TestUnmarshalGraphQL(t *testing.T) {
@@ -359,7 +359,7 @@ func TestUnmarshalGraphQL_union(t *testing.T) {
 	}
 }
 
-// Issue https://github.com/shurcooL/githubv4/issues/18.
+// Issue https://github.com/dpena-cb/githubv4/issues/18.
 func TestUnmarshalGraphQL_arrayInsideInlineFragment(t *testing.T) {
 	/*
 		query {
