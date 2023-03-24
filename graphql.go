@@ -99,6 +99,14 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 	return out, nil
 }
 
+func (c *Client) constructQuery(v interface{}, variables map[string]interface{}) string {
+	query := query(v)
+	if len(variables) > 0 {
+		return "query(" + queryArguments(variables) + ")" + query
+	}
+	return query
+}
+
 // errors represents the "errors" array in a response from a GraphQL server.
 // If returned via error interface, the slice is expected to contain at least 1 element.
 //
