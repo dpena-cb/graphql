@@ -99,7 +99,7 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 	return out, nil
 }
 
-func (c *Client) constructQuery(v interface{}, variables map[string]interface{}) string {
+func (c *Client) ConstructQuery(v interface{}, variables map[string]interface{}) string {
 	query := query(v)
 	if len(variables) > 0 {
 		return "query(" + queryArguments(variables) + ")" + query
