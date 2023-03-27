@@ -133,7 +133,7 @@ func (c *Client) QueryRawData(ctx context.Context, queryInterface interface{}, v
 		return nil, err
 	}
 	if out.Data != nil {
-		err := jsonutil.UnmarshalGraphQL(*out.Data, outputObject)
+		err := json.Unmarshal(*out.Data, outputObject)
 		if err != nil {
 			// TODO: Consider including response body in returned error, if deemed helpful.
 			return nil, err
