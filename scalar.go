@@ -52,5 +52,5 @@ func NewInt(v Int) *Int { return &v }
 // NewString is a helper to make a new *String.
 func NewString(v String) *String { return &v }
 
-// JsonBlob is a helper to make a new *JsonBlob.
-func JsonBlob(v String) *String { return &v }
+// NewJsonBlob is a helper to make a new *JsonBlob.
+func NewJsonBlob(v String) *String { return &v }
