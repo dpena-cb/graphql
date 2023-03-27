@@ -100,7 +100,7 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 }
 
 // do executes a single GraphQL operation.
-func (c *Client) QueryRawData(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (map[string]interface{}, error) {
+func (c *Client) QueryRawData(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (*map[string]interface{}, error) {
 	var query string
 	query = constructQuery(queryInterface, variables)
 
@@ -126,7 +126,7 @@ func (c *Client) QueryRawData(ctx context.Context, queryInterface interface{}, v
 		return nil, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
 	}
 	var out = new(output)
-	var outputObject map[string]interface{}
+	var outputObject *map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&out)
 	if err != nil {
 		// TODO: Consider including response body in returned error, if deemed helpful.
