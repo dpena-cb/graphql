@@ -100,7 +100,7 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 }
 
 // do executes a single GraphQL operation.
-func (c *Client) QueryRawData(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (*map[string]interface{}, error) {
+func (c *Client) QueryRawData(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (map[string]interface{}, error) {
 	var query string
 	query = constructQuery(queryInterface, variables)
 
@@ -139,7 +139,7 @@ func (c *Client) QueryRawData(ctx context.Context, queryInterface interface{}, v
 			return nil, err
 		}
 	}
-	return &outputObject, nil
+	return outputObject, nil
 }
 
 func (c *Client) ConstructQuery(v interface{}, variables map[string]interface{}) string {
