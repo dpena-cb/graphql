@@ -126,20 +126,21 @@ func (c *Client) QueryRawData(ctx context.Context, queryInterface interface{}, v
 		return nil, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
 	}
 	var out = new(output)
-	var outputObject *map[string]interface{}
+	var outputObject interface{}
 	err = json.NewDecoder(resp.Body).Decode(&out)
 	if err != nil {
 		// TODO: Consider including response body in returned error, if deemed helpful.
 		return nil, err
 	}
 	if out.Data != nil {
-		err := json.Unmarshal(*out.Data, outputObject)
+		err := json.Unmarshal(*out.Data, &outputObject)
 		if err != nil {
 			// TODO: Consider including response body in returned error, if deemed helpful.
 			return nil, err
 		}
 	}
-	return outputObject, nil
+	outputMap := outputObject.(map[string]interface{})
+	return &outputMap, nil
 }
 
 func (c *Client) ConstructQuery(v interface{}, variables map[string]interface{}) string {
