@@ -99,6 +99,51 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 	return out, nil
 }
 
+// do executes a single GraphQL operation.
+func (c *Client) QueryRawData(ctx context.Context, outputObject map[string]interface{}, queryInterface interface{}, variables map[string]interface{}) (*output, error) {
+	var query string
+	query = constructQuery(queryInterface, variables)
+
+	in := struct {
+		Query     string                 `json:"query"`
+		Variables map[string]interface{} `json:"variables,omitempty"`
+	}{
+		Query:     query,
+		Variables: variables,
+	}
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(in)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := ctxhttp.Post(ctx, c.httpClient, c.url, "application/json", &buf)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
+	}
+	var out = new(output)
+	err = json.NewDecoder(resp.Body).Decode(&out)
+	if err != nil {
+		// TODO: Consider including response body in returned error, if deemed helpful.
+		return nil, err
+	}
+	if out.Data != nil {
+		err := jsonutil.UnmarshalGraphQL(*out.Data, outputObject)
+		if err != nil {
+			// TODO: Consider including response body in returned error, if deemed helpful.
+			return nil, err
+		}
+	}
+	if len(out.Errors) > 0 {
+		return out, out.Errors
+	}
+	return out, nil
+}
+
 func (c *Client) ConstructQuery(v interface{}, variables map[string]interface{}) string {
 	query := query(v)
 	if len(variables) > 0 {
