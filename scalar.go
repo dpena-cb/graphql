@@ -34,7 +34,7 @@ type (
 	// human-readable text.
 	String string
 
-	JsonBlob map[string]string
+	JsonBlob map[string]interface{}
 )
 
 // NewBoolean is a helper to make a new *Boolean.
@@ -53,4 +53,4 @@ func NewInt(v Int) *Int { return &v }
 func NewString(v String) *String { return &v }
 
 // NewJsonBlob is a helper to make a new *JsonBlob.
-func NewJsonBlob(v map[string]string) *map[string]string { return &v }
+func NewJsonBlob(v map[string]interface{}) *map[string]interface{} { return &v }
