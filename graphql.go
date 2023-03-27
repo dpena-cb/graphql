@@ -139,9 +139,6 @@ func (c *Client) QueryRawData(ctx context.Context, queryInterface interface{}, v
 			return nil, err
 		}
 	}
-	if len(out.Errors) > 0 {
-		return out, out.Errors
-	}
 	return &outputObject, nil
 }
 
