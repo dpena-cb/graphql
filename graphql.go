@@ -33,14 +33,14 @@ func NewClient(url string, httpClient *http.Client) *Client {
 // Query executes a single GraphQL query request,
 // with a query derived from q, populating the response into it.
 // q should be a pointer to struct that corresponds to the GraphQL schema.
-func (c *Client) Query(ctx context.Context, q interface{}, variables map[string]interface{}) (*output, error) {
+func (c *Client) Query(ctx context.Context, q interface{}, variables map[string]interface{}) error {
 	return c.do(ctx, queryOperation, q, variables)
 }
 
 // Mutate executes a single GraphQL mutation request,
 // with a mutation derived from m, populating the response into it.
 // m should be a pointer to struct that corresponds to the GraphQL schema.
-func (c *Client) Mutate(ctx context.Context, m interface{}, variables map[string]interface{}) (*output, error) {
+func (c *Client) Mutate(ctx context.Context, m interface{}, variables map[string]interface{}) error {
 	return c.do(ctx, mutationOperation, m, variables)
 }
 
@@ -51,7 +51,7 @@ type output struct {
 }
 
 // do executes a single GraphQL operation.
-func (c *Client) do(ctx context.Context, op operationType, v interface{}, variables map[string]interface{}) (*output, error) {
+func (c *Client) do(ctx context.Context, op operationType, v interface{}, variables map[string]interface{}) error {
 	var query string
 	switch op {
 	case queryOperation:
@@ -69,38 +69,38 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(in)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	resp, err := ctxhttp.Post(ctx, c.httpClient, c.url, "application/json", &buf)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
+		return fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
 	}
 	var out = new(output)
 	err = json.NewDecoder(resp.Body).Decode(&out)
 	if err != nil {
 		// TODO: Consider including response body in returned error, if deemed helpful.
-		return nil, err
+		return err
 	}
 	if out.Data != nil {
 		err := jsonutil.UnmarshalGraphQL(*out.Data, v)
 		if err != nil {
 			// TODO: Consider including response body in returned error, if deemed helpful.
-			return nil, err
+			return err
 		}
 	}
 	if len(out.Errors) > 0 {
-		return out, out.Errors
+		return out.Errors
 	}
-	return out, nil
+	return nil
 }
 
-// QueryMap runs a query  returns a map representation of the result rather than filling in the queryInterface
-func (c *Client) QueryMap(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (*map[string]interface{}, error) {
+// QueryMap runs a query returns a map representation of the result rather than filling in the queryInterface
+func (c *Client) QueryMap(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (string, *map[string]interface{}, error) {
 	var query string
 	query = constructQuery(queryInterface, variables)
 
@@ -114,37 +114,37 @@ func (c *Client) QueryMap(ctx context.Context, queryInterface interface{}, varia
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(in)
 	if err != nil {
-		return nil, err
+		return query, nil, err
 	}
 	resp, err := ctxhttp.Post(ctx, c.httpClient, c.url, "application/json", &buf)
 	if err != nil {
-		return nil, err
+		return query, nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
+		return query, nil, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
 	}
 	var out = new(output)
 	var outputObject interface{}
 	err = json.NewDecoder(resp.Body).Decode(&out)
 	if err != nil {
 		// TODO: Consider including response body in returned error, if deemed helpful.
-		return nil, err
+		return query, nil, err
 	}
 	if out.Data != nil {
 		err := json.Unmarshal(*out.Data, &outputObject)
 		if err != nil {
 			// TODO: Consider including response body in returned error, if deemed helpful.
-			return nil, err
+			return query, nil, err
 		}
 	}
 	outputMap := outputObject.(map[string]interface{})
-	return &outputMap, nil
+	return query, &outputMap, nil
 }
 
 // QueryRawMessage runs a query returns a RawMessage (or []byte) representation of the result rather than filling in the queryInterface
-func (c *Client) QueryRawMessage(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (*json.RawMessage, error) {
+func (c *Client) QueryRawMessage(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (string, *json.RawMessage, error) {
 	var query string
 	query = constructQuery(queryInterface, variables)
 
@@ -158,30 +158,25 @@ func (c *Client) QueryRawMessage(ctx context.Context, queryInterface interface{}
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(in)
 	if err != nil {
-		return nil, err
+		return query, nil, err
 	}
 	resp, err := ctxhttp.Post(ctx, c.httpClient, c.url, "application/json", &buf)
 	if err != nil {
-		return nil, err
+		return query, nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
+		return query, nil, fmt.Errorf("non-200 OK status code: %v body: %q", resp.Status, body)
 	}
 	var out = new(output)
 	err = json.NewDecoder(resp.Body).Decode(&out)
 	if err != nil {
 		// TODO: Consider including response body in returned error, if deemed helpful.
-		return nil, err
+		return query, nil, err
 	}
 
-	return out.Data, nil
-}
-
-// ConstructQuery will return a string of the query we're running.
-func (c *Client) ConstructQuery(v interface{}, variables map[string]interface{}) string {
-	return constructQuery(v, variables)
+	return query, out.Data, nil
 }
 
 // errors represents the "errors" array in a response from a GraphQL server.
