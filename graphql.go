@@ -99,7 +99,7 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 	return out, nil
 }
 
-// do executes a single GraphQL operation.
+// QueryMap runs a query  returns a map representation of the result rather than filling in the queryInterface
 func (c *Client) QueryMap(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (*map[string]interface{}, error) {
 	var query string
 	query = constructQuery(queryInterface, variables)
@@ -143,7 +143,7 @@ func (c *Client) QueryMap(ctx context.Context, queryInterface interface{}, varia
 	return &outputMap, nil
 }
 
-// do executes a single GraphQL operation.
+// QueryRawMessage runs a query returns a RawMessage (or []byte) representation of the result rather than filling in the queryInterface
 func (c *Client) QueryRawMessage(ctx context.Context, queryInterface interface{}, variables map[string]interface{}) (*json.RawMessage, error) {
 	var query string
 	query = constructQuery(queryInterface, variables)
@@ -179,12 +179,9 @@ func (c *Client) QueryRawMessage(ctx context.Context, queryInterface interface{}
 	return out.Data, nil
 }
 
+// ConstructQuery will return a string of the query we're running.
 func (c *Client) ConstructQuery(v interface{}, variables map[string]interface{}) string {
-	query := query(v)
-	if len(variables) > 0 {
-		return "query(" + queryArguments(variables) + ")" + query
-	}
-	return query
+	return constructQuery(v, variables)
 }
 
 // errors represents the "errors" array in a response from a GraphQL server.
